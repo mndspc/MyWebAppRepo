@@ -1,0 +1,57 @@
+name: Deploy to Azure Web App
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Which branch to deploy?"
+        required: true
+        default: "main"
+      app_name:
+        description: "Azure Web App Name"
+        required: true
+        default: "my-webapp"
+      resource_group:
+        description: "Azure Resource Group Name"
+        required: true
+        default: "my-rg"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'   # change based on your project SDK
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Publish
+        run: dotnet publish -c Release -o publish
+
+      - name: Azure Login using Federated Identity
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.CLIENT_ID }}
+          tenant-id: ${{ secrets.TENANT_ID }}
+          subscription-id: ${{ secrets.SUBSCRIPTION_ID }}
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ github.event.inputs.AZURE_WEBAPP_NAME }}
+          resource-group-name: ${{ github.event.inputs.AZURE_RESOURCE_GROUP }}
+          package: ./publish
