@@ -42,5 +42,6 @@ jobs:
         with:
           app-name: "ASPWebAppDemo"   # 👈 Replace with your App Service name
           slot-name: "production"             # Optional: use "staging" if applicable
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          publish-profile: ${{ secrets.APP_PUBLISH_SECRET }}
           package: ./publish_output
+
