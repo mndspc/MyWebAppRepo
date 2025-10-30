@@ -7,14 +7,16 @@ on:
   workflow_dispatch:
 
 env:
-  DOTNET_VERSION: '8.0.x'  # .NET SDK version
+  DOTNET_VERSION: '8.0.x'   # Use .NET 8 SDK
+  PROJECT_PATH: 'MyWebAppRepo/ModelDemo/ModelDemo/ModelDemo.csproj'
+  PUBLISH_DIR: './publish_output'
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout source code
+      # 1️⃣ Checkout the source code
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -24,24 +26,23 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      # 3️⃣ Restore dependencies
+      # 3️⃣ Restore NuGet packages
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore ${{ env.PROJECT_PATH }}
 
-      # 4️⃣ Build the project
+      # 4️⃣ Build the project in Release mode
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build ${{ env.PROJECT_PATH }} --configuration Release --no-restore
 
-      # 5️⃣ Publish to output folder
+      # 5️⃣ Publish the project
       - name: Publish
-        run: dotnet publish -c Release -o ./publish_output
+        run: dotnet publish ${{ env.PROJECT_PATH }} -c Release -o ${{ env.PUBLISH_DIR }}
 
       # 6️⃣ Deploy to Azure Web App
-      - name: Deploy to Azure WebApp
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: "ASPWebAppDemo"   # 👈 Replace with your App Service name
-          slot-name: "production"             # Optional: use "staging" if applicable
+          app-name: 'ASPWebAppDemo'        # 👈 Replace with your Azure Web App name
+          slot-name: 'production'                  # Optional: 'staging' if you use deployment slots
           publish-profile: ${{ secrets.APP_PUBLISH_SECRET }}
-          package: ./publish_output
-
+          package: ${{ env.PUBLISH_DIR }}
